@@ -11,10 +11,14 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
 
     bool public onlyWhitelisted = true;
     address[] public whitelistedAddresses;
+    uint256 maxMintAmount = 150;
+    uint256 maxSupply = 10000;
 
     Counters.Counter private _tokenIdCounter;
 
-    constructor() ERC721("NFT", "NFT") {}
+    constructor(address[] calldata _users) ERC721("NFT", "NFT") {
+        whitelistedAddresses = _users;
+    }
 
     function safeMint(address to, string memory uri) public onlyOwner {
         uint256 tokenId = _tokenIdCounter.current();
@@ -29,6 +33,35 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
+    }
+
+    function mint(uint256 _mintAmount) public payable onlyOwner {
+        uint256 supply = totalSupply();
+        require(_mintAmount > 0, "need to mint at least 1 NFT");
+        require(
+            _mintAmount <= maxMintAmount,
+            "max mint amount per session exceeded"
+        );
+        require(supply + _mintAmount <= maxSupply, "max NFT limit exceeded");
+
+        // if (msg.sender != owner()) {
+        //     if (onlyWhitelisted == true) {
+        //         require(whitelisted[msg.sender], "user is not whitelisted");
+        //         uint256 ownerMintedCount = addressMintedBalance[msg.sender];
+        //         require(
+        //             ownerMintedCount + _mintAmount <= nftPerAddressLimit,
+        //             "max NFT per address exceeded"
+        //         );
+        //     }
+
+        //     require(msg.value >= cost * _mintAmount, "insufficient funds");
+        // }
+
+        for (uint256 i = 1; i <= _mintAmount; i++) {
+            uint256 tokenId = _tokenIdCounter.current();
+            _tokenIdCounter.increment();
+            _safeMint(to, tokenId);
+        }
     }
 
     // The following functions are overrides required by Solidity.
