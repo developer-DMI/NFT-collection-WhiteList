@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -5,20 +6,28 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
     using Counters for Counters.Counter;
+    using Strings for uint256;
 
     bool public onlyWhitelisted = true;
     address[] public whitelistedAddresses;
     uint256 maxMintAmount = 15;
     uint256 maxSupply = 75;
     string public baseExtension = ".json";
+    string public baseURI;
 
     Counters.Counter private _tokenIdCounter;
 
-    constructor(address[] calldata _users) ERC721("NFT", "NFT") {
+    constructor(
+        address[] memory _users,
+        string memory _initBaseURI
+    ) ERC721("NFT", "NFT") {
+        setBaseURI(_initBaseURI);
         whitelistedAddresses = _users;
+        mint(15);
     }
 
     function safeMint(address to, string memory uri) public onlyOwner {
@@ -61,7 +70,7 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         for (uint256 i = 1; i <= _mintAmount; i++) {
             uint256 tokenId = _tokenIdCounter.current();
             _tokenIdCounter.increment();
-            _safeMint(to, tokenId);
+            _safeMint(msg.sender, tokenId);
         }
     }
 
@@ -73,11 +82,11 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         super._burn(tokenId);
     }
 
-    function tokenURI(
-        uint256 tokenId
-    ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
-    }
+    // function tokenURI(
+    //     uint256 tokenId
+    // ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+    //     return super.tokenURI(tokenId);
+    // }
 
     function whitelistUsers(address[] calldata _users) public onlyOwner {
         delete whitelistedAddresses;
@@ -95,5 +104,40 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
             }
         }
         return false;
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return _tokenIdCounter.current();
+    }
+
+    function setBaseURI(string memory _newBaseURI) public onlyOwner {
+        baseURI = _newBaseURI;
+    }
+
+    function tokenURI(
+        uint256 tokenId
+    )
+        public
+        view
+        virtual
+        override(ERC721, ERC721URIStorage)
+        returns (string memory)
+    {
+        require(
+            _exists(tokenId),
+            "ERC721Metadata: URI query for nonexistent token"
+        );
+
+        string memory currentBaseURI = _baseURI();
+        return
+            bytes(currentBaseURI).length > 0
+                ? string(
+                    abi.encodePacked(
+                        currentBaseURI,
+                        tokenId.toString(),
+                        baseExtension
+                    )
+                )
+                : "";
     }
 }
