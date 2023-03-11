@@ -12,61 +12,61 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
     using Counters for Counters.Counter;
     using Strings for uint256;
 
-    bool public onlyWhitelisted = true;
     address[] public whitelistedAddresses;
     uint256 maxMintAmount = 15;
     uint256 maxSupply = 75;
     string public baseExtension = ".json";
-    string public baseURI;
+    string public baseURI = "";
 
     Counters.Counter private _tokenIdCounter;
+
+    modifier mintCompliance(uint256 _mintAmount) {
+        require(
+            _mintAmount > 0 && _mintAmount <= maxMintAmount,
+            "Invalid mint amount!"
+        );
+        require(
+            _tokenIdCounter.current() + _mintAmount <= maxSupply,
+            "Max supply exceeded!"
+        );
+        _;
+    }
 
     constructor(
         address[] memory _users,
         string memory _initBaseURI
-    ) ERC721("NFT", "NFT") {
+    ) ERC721("RUN! By Axel Mishomaro", "RNU") {
         setBaseURI(_initBaseURI);
         whitelistedAddresses = _users;
         mint(15);
     }
 
-    function safeMint(address to, string memory uri) public onlyOwner {
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
+    }
+
+    // Mint one token for Owner
+
+    function safeMint(address to) public onlyOwner mintCompliance(1) {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
     }
 
-    function safeMintWL(address to, string memory uri) public {
+    // Mint one token for WL
+
+    function safeMintWL(address to) public mintCompliance(1) {
         require(isWhitelisted(msg.sender), "user is not whitelisted");
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
     }
 
-    function mint(uint256 _mintAmount) public payable onlyOwner {
-        uint256 supply = totalSupply();
-        require(_mintAmount > 0, "need to mint at least 1 NFT");
-        require(
-            _mintAmount <= maxMintAmount,
-            "max mint amount per session exceeded"
-        );
-        require(supply + _mintAmount <= maxSupply, "max NFT limit exceeded");
+    // Mass mint
 
-        // if (msg.sender != owner()) {
-        //     if (onlyWhitelisted == true) {
-        //         require(whitelisted[msg.sender], "user is not whitelisted");
-        //         uint256 ownerMintedCount = addressMintedBalance[msg.sender];
-        //         require(
-        //             ownerMintedCount + _mintAmount <= nftPerAddressLimit,
-        //             "max NFT per address exceeded"
-        //         );
-        //     }
-
-        //     require(msg.value >= cost * _mintAmount, "insufficient funds");
-        // }
-
+    function mint(
+        uint256 _mintAmount
+    ) public payable onlyOwner mintCompliance(_mintAmount) {
         for (uint256 i = 1; i <= _mintAmount; i++) {
             uint256 tokenId = _tokenIdCounter.current();
             _tokenIdCounter.increment();
@@ -82,20 +82,20 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         super._burn(tokenId);
     }
 
-    // function tokenURI(
-    //     uint256 tokenId
-    // ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-    //     return super.tokenURI(tokenId);
-    // }
+    // Set new white list
 
-    function whitelistUsers(address[] calldata _users) public onlyOwner {
+    function setWhiteListUsers(address[] calldata _users) public onlyOwner {
         delete whitelistedAddresses;
         whitelistedAddresses = _users;
     }
 
-    function setOnlyWhitelisted(bool _state) public onlyOwner {
-        onlyWhitelisted = _state;
+    // Push new addres to white list
+
+    function pushNewAddressToWhiteList(address _user) public onlyOwner {
+        whitelistedAddresses.push(_user);
     }
+
+    // Check, does user in white list?
 
     function isWhitelisted(address _user) public view returns (bool) {
         for (uint i = 0; i < whitelistedAddresses.length; i++) {
@@ -106,9 +106,7 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         return false;
     }
 
-    function totalSupply() public view returns (uint256) {
-        return _tokenIdCounter.current();
-    }
+    // Change base URI
 
     function setBaseURI(string memory _newBaseURI) public onlyOwner {
         baseURI = _newBaseURI;
