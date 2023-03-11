@@ -11,8 +11,9 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
 
     bool public onlyWhitelisted = true;
     address[] public whitelistedAddresses;
-    uint256 maxMintAmount = 150;
-    uint256 maxSupply = 10000;
+    uint256 maxMintAmount = 15;
+    uint256 maxSupply = 75;
+    string public baseExtension = ".json";
 
     Counters.Counter private _tokenIdCounter;
 
