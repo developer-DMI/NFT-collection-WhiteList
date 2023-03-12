@@ -18,7 +18,7 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
     string public baseExtension = ".json";
     string public baseURI = "";
 
-    Counters.Counter private _tokenIdCounter;
+    Counters.Counter public _tokenIdCounter;
 
     modifier mintCompliance(uint256 _mintAmount) {
         require(
@@ -26,7 +26,7 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
             "Invalid mint amount!"
         );
         require(
-            _tokenIdCounter.current() + _mintAmount <= maxSupply,
+            _tokenIdCounter.current() + _mintAmount <= maxSupply + 1,
             "Max supply exceeded!"
         );
         _;

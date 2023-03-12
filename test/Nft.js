@@ -54,5 +54,16 @@ const {
       const {nft, owner, acc1, acc2} = await loadFixture(deployNftFixture);
       await expect(nft.connect(acc2).mint(2)).to.be.revertedWith("user is not whitelisted");
     });
+
+    it("Should revert, if someone mint more then max supply nft", async function () {
+      const {nft, owner, acc1, acc2} = await loadFixture(deployNftFixture);
+      await nft.mint(10)
+      await nft.mint(10)
+      await nft.mint(10)
+      await nft.mint(10)
+      await nft.mint(10)
+      await nft.mint(10)
+      await expect(nft.mint(1)).to.be.revertedWith("Max supply exceeded!");
+    });
   });
   
