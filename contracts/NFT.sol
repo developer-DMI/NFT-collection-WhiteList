@@ -13,7 +13,7 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
     using Strings for uint256;
 
     address[] public whitelistedAddresses;
-    uint256 maxMintAmount = 15;
+    uint256 maxMintAmount = 10;
     uint256 maxSupply = 75;
     string public baseExtension = ".json";
     string public baseURI = "";
@@ -36,9 +36,11 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         address[] memory _users,
         string memory _initBaseURI
     ) ERC721("RUN! By Axel Mishomaro", "RNU") {
-        setBaseURI(_initBaseURI);
+        _tokenIdCounter.increment();
+        baseURI = _initBaseURI;
         whitelistedAddresses = _users;
-        mint(15);
+        mint(10);
+        mint(5);
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -55,18 +57,21 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
 
     // Mint one token for WL
 
-    function safeMintWL(address to) public mintCompliance(1) {
+    function safeMintWL() public mintCompliance(1) {
         require(isWhitelisted(msg.sender), "user is not whitelisted");
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
-        _safeMint(to, tokenId);
+        _safeMint(msg.sender, tokenId);
     }
 
     // Mass mint
 
     function mint(
         uint256 _mintAmount
-    ) public payable onlyOwner mintCompliance(_mintAmount) {
+    ) public payable mintCompliance(_mintAmount) {
+        if (msg.sender != owner()) {
+            require(isWhitelisted(msg.sender), "user is not whitelisted");          
+        }
         for (uint256 i = 1; i <= _mintAmount; i++) {
             uint256 tokenId = _tokenIdCounter.current();
             _tokenIdCounter.increment();
@@ -106,12 +111,6 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         return false;
     }
 
-    // Change base URI
-
-    function setBaseURI(string memory _newBaseURI) public onlyOwner {
-        baseURI = _newBaseURI;
-    }
-
     function tokenURI(
         uint256 tokenId
     )
@@ -139,5 +138,3 @@ contract NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
                 : "";
     }
 }
-
-

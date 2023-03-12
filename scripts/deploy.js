@@ -7,20 +7,17 @@
 const hre = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+  const [owner, acc1, acc2] = await ethers.getSigners();
 
   const lockedAmount = hre.ethers.utils.parseEther("0.001");
 
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  const NFT = await hre.ethers.getContractFactory("NFT");
+  const nft = await NFT.deploy([acc1.address], 'ipfs://bafybeif2urrld55ikv7cel2yns3qoctirfhl6iso3c7syv7a27o4ms7utu/');
 
-  await lock.deployed();
+  await nft.deployed();
 
   console.log(
-    `Lock with ${ethers.utils.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
+    `NFT deployed to ${nft.address}`
   );
 }
 
